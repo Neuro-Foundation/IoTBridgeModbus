@@ -266,7 +266,7 @@ internal class Program
 
 			if (!ModbusGatewayFound)
 			{
-				string ModbusHost = await EnvironmentSettings.GetAsync("MODBUS_HOST", "ModbusHost", "test.mosquitto.org");
+				string ModbusHost = await EnvironmentSettings.GetAsync("MODBUS_HOST", "ModbusHost", string.Empty);
 				bool ModbusTls = await EnvironmentSettings.GetAsync("MODBUS_TLS", "ModbusTls", false);
 				int ModbusPort = (int)await EnvironmentSettings.GetAsync("MODBUS_PORT", "ModbusPort", ModbusTcpClient.DefaultPort);
 				ModbusTcpClient? ModbusClient = null;
