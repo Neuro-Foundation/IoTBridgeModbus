@@ -11,6 +11,8 @@ using Waher.Content.QR.Encoding;
 using Waher.Content.Xml;
 using Waher.Events;
 using Waher.Events.Console;
+using Waher.Events.Filter;
+using Waher.Events.XMPP;
 using Waher.Networking.Modbus;
 using Waher.Networking.XMPP;
 using Waher.Networking.XMPP.BitsOfBinary;
@@ -248,6 +250,10 @@ internal class Program
 			};
 
 			RegisterVCard();
+
+			Log.Register(new EventFilter("XMPP Event Filter",
+				new XmppEventSink("XMPP Event Sink", xmppClient, XmppHost, false),
+				EventType.Critical));
 
 			#endregion
 
