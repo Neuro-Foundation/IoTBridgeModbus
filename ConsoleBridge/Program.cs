@@ -1,5 +1,6 @@
 ﻿using SkiaSharp;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
@@ -41,12 +42,13 @@ internal class Program
 	private static FilesProvider? db = null;
 	private static XmppClient? xmppClient = null;
 
-	private static readonly QrEncoder? qrEncoder = new();
-	private static string? deviceId;
-	private static string? thingRegistryJid = string.Empty;
-	private static string? provisioningJid = string.Empty;
-	private static string? logJid = string.Empty;
-	private static string? ownerJid = string.Empty;
+	private static readonly QrEncoder qrEncoder = new();
+	private static string deviceId = string.Empty;
+	private static string thingRegistryJid = string.Empty;
+	private static string provisioningJid = string.Empty;
+	private static string logJid = string.Empty;
+	private static string ownerJid = string.Empty;
+	private static string appDataFolder = string.Empty;
 	private static ConcentratorServer? concentratorServer = null;
 	private static ThingRegistryClient? registryClient = null;
 	private static ProvisioningClient? provisioningClient = null;
@@ -90,8 +92,16 @@ internal class Program
 
 			#region Setting up database
 
-			db = await FilesProvider.CreateAsync(Path.Combine(Environment.CurrentDirectory, "Data"),
-				"Default", 8192, 1000, 8192, Encoding.UTF8, 10000);
+
+			if (RunningInsideContainer())
+				appDataFolder = "/var/lib/IoT Gateway/";
+			else
+				appDataFolder = Environment.CurrentDirectory;
+
+			Log.Informational("Application data folder: " + appDataFolder);
+
+			db = await FilesProvider.CreateAsync(Path.Combine(appDataFolder, "Data"),
+					"Default", 8192, 1000, 8192, Encoding.UTF8, 10000);
 			await db.RepairIfInproperShutdown(null);
 
 			Database.Register(db);
@@ -203,6 +213,12 @@ internal class Program
 					}
 				}
 
+				if (RunningInsideContainer())
+				{
+					Log.Error("XMPP connection parameters not provided. Cannot continue.");
+					return;
+				}
+
 				XmppHost = InputString("XMPP Broker", XmppHost);
 				XmppPort = InputString("Port", XmppPort);
 				XmppUserName = InputString("User Name", XmppUserName);
@@ -301,6 +317,12 @@ internal class Program
 						{
 							Log.Error("Unable to connect to MODBUS Network. The following error was reported:\r\n\r\n" + ex.Message);
 						}
+					}
+
+					if (RunningInsideContainer())
+					{
+						Log.Error("Modbus connection parameters not provided. Cannot continue.");
+						return;
 					}
 
 					ModbusHost = InputString("Modbus Gateway", ModbusHost);
@@ -476,6 +498,12 @@ internal class Program
 
 	#region Console Input
 
+	private static bool RunningInsideContainer()
+	{
+		return RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
+			Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+	}
+
 	private static int InputString(string Prompt, int DefaultValue)
 	{
 		return InputString(Prompt, string.Empty, DefaultValue);
@@ -539,9 +567,16 @@ internal class Program
 		Console.Write("> ");
 		Console.ForegroundColor = ConsoleColor.Yellow;
 
-		string? s = Console.In.ReadLine();
-		if (string.IsNullOrEmpty(s))
+		string? s;
+
+		if (RunningInsideContainer())
 			s = DefaultValue;
+		else
+		{
+			s = Console.In.ReadLine();
+			if (string.IsNullOrEmpty(s))
+				s = DefaultValue;
+		}
 
 		Console.ForegroundColor = ConsoleColor.White;
 
@@ -702,6 +737,12 @@ internal class Program
 				}
 			}
 
+			if (RunningInsideContainer())
+			{
+				Log.Error("Location information not provided. Cannot continue.");
+				return;
+			}
+
 			Country = InputString("Country", Country);
 			Region = InputString("Region", Region);
 			City = InputString("City", City);
@@ -779,7 +820,7 @@ internal class Program
 		if (registryClient is null || qrEncoder is null)
 			return;
 
-		string FilePath = Path.Combine(Environment.CurrentDirectory, "Bridge.iotdisco");
+		string FilePath = Path.Combine(appDataFolder, "Bridge.iotdisco");
 		string DiscoUri = registryClient.EncodeAsIoTDiscoURI(MetaInfo);
 		QrMatrix M = qrEncoder.GenerateMatrix(CorrectionLevel.L, DiscoUri);
 		string QrCode = M.ToQuarterBlockText();
