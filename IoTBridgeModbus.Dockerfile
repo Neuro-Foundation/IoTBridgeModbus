@@ -45,7 +45,7 @@ LABEL env.MODBUS_PORT="Optional Port number to use when connecting to host."
 
 ARG REGISTRY_LOCATION
 ENV REGISTRY_LOCATION=""
-LABEL env.REGISTRY_LOCATION=""
+LABEL env.REGISTRY_LOCATION="'true' or '1' if bridge has a location, 'false' or '0' if the bridge does not have a location."
 
 ARG REGISTRY_COUNTRY
 ENV REGISTRY_COUNTRY=""

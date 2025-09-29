@@ -267,7 +267,7 @@
 	<Variable name="MODBUS_HOST" default="" label="Modbus gateway to connect to."/>
 	<Variable name="MODBUS_TLS" default="false" label="If Modbus gateway connection should use TLS."/>
 	<Variable name="MODBUS_PORT" default="502" label="Optional Port number to use when connecting to host."/>
-	<Variable name="REGISTRY_LOCATION" default="" label=""/>
+	<Variable name="REGISTRY_LOCATION" default="" label="'true' or '1' if bridge has a location, 'false' or '0' if the bridge does not have a location."/>
 	<Variable name="REGISTRY_COUNTRY" default="" label="Country to register in Thing Registry."/>
 	<Variable name="REGISTRY_REGION" default="" label="Region to register in Thing Registry."/>
 	<Variable name="REGISTRY_CITY" default="" label="City to register in Thing Registry."/>
