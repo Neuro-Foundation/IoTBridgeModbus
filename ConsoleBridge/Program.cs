@@ -34,6 +34,7 @@ using Waher.Things;
 using Waher.Things.Ip;
 using Waher.Things.Metering;
 using Waher.Things.Modbus;
+using Waher.Things.SensorData;
 using Waher.Things.Virtual;
 using Waher.Things.Xmpp;
 
@@ -927,6 +928,13 @@ internal class Program
 		SafeDispose(ref concentratorServer);
 		
 		concentratorServer = await ConcentratorServer.Create(xmppClient, registryClient, provisioningClient, new MeteringTopology());
+
+		MeteringTopology.OnNewMomentaryValues += OnNewMomentaryValues;
+	}
+
+	private static Task OnNewMomentaryValues(IThingReference Reference, IEnumerable<Field> Values)
+	{
+		return concentratorServer?.SensorServer?.NewMomentaryValues(Reference, Values) ?? Task.CompletedTask;
 	}
 
 	#endregion
